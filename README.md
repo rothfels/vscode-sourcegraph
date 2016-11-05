@@ -1,65 +1,59 @@
-# vscode-sourcegraph README
+# vscode-sourcegraph
 
-This is the README for your extension "vscode-sourcegraph". After writing up a brief description, we recommend including the following sections.
+Jump to Sourcegraph directly from VS Code!
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+**Command**
 
-For example if there is an image subfolder under your extension project workspace:
+In the command pallet, type `Open in Sourcegraph`.
 
-\!\[feature X\]\(images/feature-x.png\)
+![open](images/open-in-browser.png?raw=true "Open in browser function")
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+In the command pallet, type `Copy Sourcegraph link to clipboard`.
+
+![copy](images/copy-to-clipboard.png?raw=true "Copy link to clipboard function")
+
+**Keybord shortcut**
+
+ Press <kbd>Ctrl+S</kbd> to open in browser.
+ Press <kbd>Ctrl+Shift+S</kbd> to copy to clipboard.
+
+**Context menu**
+
+Right click on an explorer item and choose `Open in Sourcegraph` or `Copy Sourcegraph link to clipboard`.
+
+![context](images/context-menu.png?raw=true "Context menu options")
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+Your code must be hosted on GitHub.com. If your repository is private, create an account on
+[Sourcegraph.com](https://sourcegraph.com) and provide Sourcegraph OAuth scope to view your private
+repositories.
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+Linking to a line on Sourcegraph.com requires a non-dirty buffer and the `HEAD` revision must be
+pushed upstream.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Linking will not work properly if your working directory is in a deatched `HEAD` state.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
+Initial release
 
-### 1.0.1
+## Development
 
-Fixed issue #.
+### Make changes
+* press `F5` to open a new window with your extension loaded
+* relaunch the extension from the debug toolbar after changing code in `src/extension.ts`, or using `F5`
+* reload (`Ctrl+R` or `Cmd+R` on Mac) the VS Code window with your extension to load your changes
 
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+### Run tests
+* open the debug viewlet (`Ctrl+Shift+D` or `Cmd+Shift+D` on Mac) and from the launch configuration dropdown pick `Launch Tests`
+* press `F5` to run the tests in a new window with your extension loaded
+* see the output of the test result in the debug console
+* make changes to `test/extension.test.ts` or create new test files inside the `test` folder
+    * by convention, the test runner will only consider files matching the name pattern `**.test.ts`

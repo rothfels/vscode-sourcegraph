@@ -1,29 +1,102 @@
-'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import {
+	getRepoURI,
+	getRev,
+	isDirectory,
+	isFileClean,
+	isRevUpstream,
+	trimRootPath,
+} from "./utils";
+import * as vscode from "vscode";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+import { copy } from "copy-paste";
+// tslint:disable-next-line
+const open: (val: string) => any = require("open");
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "vscode-sourcegraph" is now active!');
-
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
-
-    context.subscriptions.push(disposable);
+interface Options {
+	directory?: string;
+	file?: string;
+	line?: number;
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {
+function handle(cb: (val: string) => any, opt?: Options): void {
+	getRepoURI().then((uri) => getRev().then((rev) => isRevUpstream(rev).then((isUpstream) => {
+		if (!isUpstream) {
+			return vscode.window.setStatusBarMessage(`Push revision ${rev.substr(0, 6)} upstream first!`, 2500);
+		}
+
+		if (typeof opt === "undefined") {
+			cb(`https://sourcegraph.com/${uri}@${rev}`);
+		} else {
+			if (typeof opt.line === "undefined") {
+				// TODO: handle unclean workspace?
+				if (opt.file) {
+					cb(`https://sourcegraph.com/${uri}@${rev}/-/blob/${opt.file}`);
+				} else if (opt.directory) {
+					cb(`https://sourcegraph.com/${uri}@${rev}/-/tree/${opt.directory}`);
+				} else {
+					console.error("unexpected options:", opt);
+				}
+			} else {
+				isFileClean().then((isClean) => {
+					if (isClean) {
+						cb(`https://sourcegraph.com/${uri}@${rev}/-/blob/${opt.file}#L${opt.line}`);
+					} else {
+						vscode.window.setStatusBarMessage("Commit your changes and push upstream first!", 2500);
+					}
+				});
+			}
+		}
+	}))).catch(console.error);
+}
+
+function handleLinkForPath(path: string, cb: (val: string) => any): void {
+	if (isDirectory(path)) {
+		handle(cb, { directory: trimRootPath(path) });
+	} else {
+		handle(cb, { file: trimRootPath(path) });
+	}
+}
+
+function handleLinkForCurrentEditorLine(cb: (val: string) => any): void {
+	const editor = vscode.window.activeTextEditor;
+	if (editor) {
+		handle(cb, { file: trimRootPath(editor.document.uri.fsPath), line: editor.selection.active.line + 1 });
+	}
+}
+
+function handleLinkForRepo(cb: (val: string) => any): void {
+	handle(cb);
+}
+
+function branchOnCallingContext(args: any[], cb: (val: string) => any): void {
+	if (args.length > 0 && args[0] && args[0].fsPath) {
+		// jump to path from nav tree context menu.
+		handleLinkForPath(args[0].fsPath, cb);
+	} else if (vscode.window.activeTextEditor) {
+		// jump to line in current editor
+		handleLinkForCurrentEditorLine(cb);
+	} else {
+		// jump to repo
+		handleLinkForRepo(cb);
+	}
+}
+
+function openInSourcegraph(...args: any[]): void {
+	branchOnCallingContext(args, open);
+}
+
+function copySourcegraphLinkToClipboard(...args: any[]): void {
+	branchOnCallingContext(args, (val: string) => {
+		vscode.window.setStatusBarMessage("Copied Sourcegraph link!", 1000);
+		copy(val);
+	});
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+	context.subscriptions.push(vscode.commands.registerCommand("extension.openInSourcegraph", openInSourcegraph));
+	context.subscriptions.push(vscode.commands.registerCommand("extension.copySourcegraphLinkToClipboard", copySourcegraphLinkToClipboard));
+}
+
+export function deactivate(): void {
+	// noop
 }
